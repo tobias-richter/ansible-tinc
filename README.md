@@ -26,9 +26,14 @@ Role Variables
 * tinc_mode can be router, switch, or hub. (See https://www.tinc-vpn.org/documentation/tinc.conf.5). (Default: router)
 * tinc_netname: The tinc network name
 * tinc_vpn_ip: The ip/subnet to assign to a host using host_vars
+* tinc_host_conf_custom: Custom host configuration block (default: "")
 * tinc_vpn_cidr: The cidr used in tinc (Default: /24, or force /32 in router mode).
 * tinc_vpn_interface: The device for tinc to use (Default: tun0)
 * tinc_control_plane_bind_ip: The ip for tinc to bind to (Example: {{ ansible_host }} )
+* tinc_loglevel: The loglevel of the tinc daemon (see https://www.tinc-vpn.org/documentation/tincd.8)
+* tinc_logfile: Path to the logfile of the tinc daemon (default: `--loglevel`, logging to `/var/log/{{ tinc_netname }}`)
+* tinc_extra_options: List of extra options passed to tincd (default: `[ {{ tinc_logfile }}, {{ tinc_loglevel }} ]`)
+* tinc_systemd_execstart: Allows customization of systemd start command (default: `/usr/sbin/tincd -n {{ tinc_netname }} {{ tinc_extra_options | join(' ') }}`
 
 Inventory should have an extra tinc_control_plane_bind_ip or tinc_vpn_ip,
 depending on the modes. Please have a look in the task files.

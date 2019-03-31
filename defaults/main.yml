@@ -29,3 +29,16 @@ tinc_extra_options:
 
 # start commandline to execstart
 tinc_systemd_execstart: "/usr/sbin/tincd -n {{ tinc_netname }} {{ tinc_extra_options | join(' ') }}"
+
+# Custom tinc host configuration
+# tinc_host_conf_custom: ""
+# example: |
+#   Subnets: 192.168.0.0/24
+#   # Custom config option
+
+# Custom tinc host configuration
+tinc_conf_custom: ""
+# example: |
+#   Subnets: 192.168.0.0/24
+#   # Custom config option
+

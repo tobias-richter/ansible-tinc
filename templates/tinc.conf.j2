@@ -8,3 +8,6 @@ Interface = {{ tinc_vpn_interface }}
 ConnectTo = {{ hostvars[host]['inventory_hostname'] | replace('.','_') | replace('-','_') }}
 {% endif %}
 {% endfor %}
+Mode = {{ tinc_mode }}
+
+{{ tinc_conf_custom }}
