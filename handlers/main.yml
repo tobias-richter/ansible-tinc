@@ -8,11 +8,6 @@
 #    state: restarted
 
 - name: Restart Service
-  systemd:
-   daemon_reload: yes
-  when: ansible_service_mgr == "systemd"
-
-- name: Restart Service
   service:
     name: "{{ service_name }}"
     state: restarted

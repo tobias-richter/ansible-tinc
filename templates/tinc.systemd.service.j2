@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=forking
-ExecStart=/usr/sbin/tincd -n {{ tinc_netname }}
+ExecStart={{ tinc_systemd_execstart }}
 ExecReload=/usr/bin/kill -HUP $MAINPID
 
 [Install]

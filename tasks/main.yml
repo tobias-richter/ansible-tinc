@@ -25,15 +25,25 @@
     - tinc_install
     - install
 
-- name: create tinc systemd service file
-  template:
-    src: tinc.systemd.service.j2
-    dest: /etc/systemd/system/tinc.service
-  notify: Restart Service
+- name: Configure systemd.
+  block:
+  - name: create tinc systemd service file
+    template:
+      src: tinc.systemd.service.j2
+      dest: /etc/systemd/system/tinc.service
+    notify: Restart Service
+    tags:
+      - tinc_install
+      - install
+
+  - name: Enable service and reload daemon.
+    systemd:
+      name: "tinc"
+      enabled: yes
+      daemon_reload: yes
+
   when: ansible_service_mgr == "systemd"
-  tags:
-    - tinc_install
-    - install
+
 
 - name: OpenWRT Configure tinc with UCI
   template:
