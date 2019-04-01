@@ -9,5 +9,6 @@ ConnectTo = {{ hostvars[host]['inventory_hostname'] | replace('.','_') | replace
 {% endif %}
 {% endfor %}
 Mode = {{ tinc_mode }}
-
+{% if tinc_conf_custom is defined %}
 {{ tinc_conf_custom }}
+{% endif %}
