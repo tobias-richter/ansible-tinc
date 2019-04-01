@@ -1,11 +1,14 @@
 # Inspired by https://github.com/thisismitch/ansible-tinc
-- name: "Set helper facts"
-  set_fact:
-    _newline: "\n"
-- name: "Set commmon facts"
+- name: "Set common facts"
   set_fact:
     _tinc_hostname: "{{ inventory_hostname | replace('.','_') | replace('-','_') }}"
     _tinc_net_path: "/etc/tinc/{{ tinc_netname }}"
+    _tinc_custom_host_config_state: present
+
+- name: "Set custom host config state to absent when not defined"
+  set_fact:
+    _tinc_custom_host_config_state: absent
+  when: tinc_host_conf_custom is not defined
 
 - name: ensure tinc netname directory exists
   file:
@@ -64,13 +67,25 @@
   notify:
     - Restart Service
 
-- name: Ensure custom host configuration is present
+- name: "Ensure custom host configuration is {{ _tinc_custom_host_config_state }}"
   blockinfile:
     path: "{{ _tinc_net_path }}/hosts/{{ _tinc_hostname }}"
     marker: "# {mark} custom host config ANSIBLE MANAGED BLOCK"
-    block: "{{ tinc_host_conf_custom }}"
+    block: "{{ tinc_host_conf_custom | default('') }}"
     create: yes
-  when: tinc_host_conf_custom is defined
+    state: "{{ _tinc_custom_host_config_state }}"
+  notify:
+    - Restart Service
+
+- name: Deploy files
+  copy:
+    src: "{{ item }}"
+    dest: "{{ _tinc_net_path }}/{{ item }}"
+    mode: o+x
+  with_items:
+    - subnet.pl
+    - subnet-down
+    - subnet-up
   notify:
     - Restart Service
 
@@ -138,6 +153,14 @@
   with_items: "{{ play_hosts }}"
   tags:
     - tinc_internal_hosts
+
+- name: Enable ip forwarding.
+  sysctl:
+    name: "net.ipv4.ip_forward"
+    value: "1"
+    state: "present"
+  notify:
+    - Restart Service
 
 # Ensure the systemd daemon is reloaded and the service is restarted
 - meta: flush_handlers

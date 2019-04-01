@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+GW="$(/usr/bin/env ip route show | awk '/default/ {print $3}' | head -n1)"
+OURNAME=$(sed -e 's/ //g' -e '/^name/I!d' -re 's/^(name|name=)//I' < "/etc/tinc/$NETNAME/tinc.conf" | head -n1)
+VPNNET=$(sed -e 's/ //g' -e '/^vpnnet/I!d' -re 's/^(vpnnet|vpnnet=)//I' < "/etc/tinc/$NETNAME/tinc.conf" | head -n1)
+
+echo "subnet-up : #############################################################" | ts >> /var/log/tinc.subnet.log
+echo "subnet-up : NETNAME '$NETNAME'" | ts >> /var/log/tinc.subnet.log
+echo "subnet-up : NAME '$NAME'" | ts >> /var/log/tinc.subnet.log
+echo "subnet-up : DEVICE '$DEVICE'" | ts >> /var/log/tinc.subnet.log
+echo "subnet-up : INTERFACE '$INTERFACE'" | ts >> /var/log/tinc.subnet.log
+echo "subnet-up : NODE '$NODE'" | ts >> /var/log/tinc.subnet.log
+echo "subnet-up : REMOTEADDRESS '$REMOTEADDRESS'" | ts >> /var/log/tinc.subnet.log
+echo "subnet-up : SUBNET '$SUBNET'" | ts >> /var/log/tinc.subnet.log
+echo "subnet-up : GW '$GW'" | ts >> /var/log/tinc.subnet.log
+echo "subnet-up : OURNAME '$OURNAME'" | ts >> /var/log/tinc.subnet.log
+echo "subnet-up : VPNNET '$VPNNET'" | ts >> /var/log/tinc.subnet.log
+
+# scope link
+if /usr/bin/env ip route show | grep 'scope link' | grep -q "$SUBNET"; then
+    echo "Not adding scope link route ($SUBNET)"
+    exit 0
+fi
+
+# own routes
+if [ "${OURNAME,,}" == "${NODE,,}" ]; then
+  echo "subnet-up : Not adding our own route (${SUBNET})" >> /var/log/tinc.subnet.log
+  exit 0
+fi
+
+# vpn subnet
+if "/etc/tinc/${NETNAME}/subnet.pl" "${SUBNET%/32}" "$VPNNET"; then
+    echo "subnet-up : Not adding vpn internal routes (${SUBNET})"  >> /var/log/tinc.subnet.log
+    exit 0
+fi
+
+# blacklist
+if [ -f "/etc/tinc/${NETNAME}/blacklist" ]; then
+    if sed -n -e "/^\[${GW}\]$/,/^\[.*\]$/{ /^\[${GW}\]$/d; /^\[.*\]$/d; p; }" "/etc/tinc/${NETNAME}/blacklist" | grep -q "$SUBNET"; then
+        echo "subnet-up : Not adding blacklisted route ($SUBNET)"  >> /var/log/tinc.subnet.log
+        exit 0
+    fi
+fi
+
+/usr/bin/env ip route add "$SUBNET" dev "$INTERFACE"
+
+if [ -x "/etc/tinc/${NETNAME}/subnet-up.local" ]; then
+    "/etc/tinc/${NETNAME}/subnet-up.local" "$SUBNET" "$INTERFACE"
+fi
