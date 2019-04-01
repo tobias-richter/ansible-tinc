@@ -1,2 +1,6 @@
 #!/bin/sh
+{% if tinc_down_scripts is defined %}
+{{ tinc_down_scripts }}
+{% endif %}
+
 ip link set dev {{ tinc_vpn_interface }} down
