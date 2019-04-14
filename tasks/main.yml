@@ -20,28 +20,34 @@
     - tinc_requirements
     - install
 
-- name: Create tinc group.
-  group:
-    name: "{{ tinc_group }}"
-    state: present
-  when: tinc_group != 'root'
-  tags:
-    - tinc_install
-    - install
+- name: Configure non root user
+  block:
+  - name: Create tinc group.
+    group:
+      name: "{{ tinc_group }}"
+      state: present
+    tags:
+      - tinc_install
+      - install
 
-- name: Create tinc user.
-  user:
-    name: "{{ tinc_user }}"
-    group: "{{ tinc_group }}"
-    groups:
-      - nogroup
-    append: yes
-    system: yes
-    state: present
+  - name: Create tinc user.
+    user:
+      name: "{{ tinc_user }}"
+      group: "{{ tinc_group }}"
+      groups:
+        - syslog
+      append: no
+      system: yes
+      state: present
+    tags:
+      - tinc_install
+      - install
+
+  - name: Add user option to commandline
+    set_fact:
+      tinc_extra_options: "{{ tinc_extra_options + ['--user {{ tinc_user }}'] }}"
+
   when: tinc_user != 'root'
-  tags:
-    - tinc_install
-    - install
 
 - name: Create tinc log folder
   file:
@@ -50,7 +56,7 @@
     recurse: True
     owner: "{{ tinc_user }}"
     group: "{{ tinc_group }}"
-    mode: u=rw,g=r,o=
+    mode: u=rwx,g=r,o=
 
 - name: install tinc
   package:

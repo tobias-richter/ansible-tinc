@@ -1,8 +1,8 @@
 ---
 # defaults file for tinc
 
-tinc_user: root
-tinc_group: root
+tinc_user: tinc
+tinc_group: tinc
 tinc_log_path: /var/log/tinc
 tinc_pid_path: "{{ _tinc_net_path }}/{{ tinc_netname }}.pid"
 
