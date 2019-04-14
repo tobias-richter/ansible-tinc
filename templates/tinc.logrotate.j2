@@ -1,0 +1,13 @@
+{{ tinc_log_path }}/*.log {
+    prerotate
+      systemctl stop tinc
+    endscript
+    weekly
+    rotate 8
+    delaycompress
+    compress
+    notifempty
+    postrotate
+      systemctl start tinc
+    endscript
+}

@@ -1,5 +1,8 @@
 ---
-# tasks file for tinc
+- name: "Set common facts"
+  set_fact:
+    _tinc_net_path: "/etc/tinc/{{ tinc_netname }}"
+
 - name: install epel-release
   yum:
     name: epel-release
@@ -16,6 +19,38 @@
   tags:
     - tinc_requirements
     - install
+
+- name: Create tinc group.
+  group:
+    name: "{{ tinc_group }}"
+    state: present
+  when: tinc_group != 'root'
+  tags:
+    - tinc_install
+    - install
+
+- name: Create tinc user.
+  user:
+    name: "{{ tinc_user }}"
+    group: "{{ tinc_group }}"
+    groups:
+      - nogroup
+    append: yes
+    system: yes
+    state: present
+  when: tinc_user != 'root'
+  tags:
+    - tinc_install
+    - install
+
+- name: Create tinc log folder
+  file:
+    path: "{{ tinc_log_path }}"
+    state: directory
+    recurse: True
+    owner: "{{ tinc_user }}"
+    group: "{{ tinc_group }}"
+    mode: u=rw,g=r,o=
 
 - name: install tinc
   package:
@@ -41,6 +76,14 @@
       name: "tinc"
       enabled: yes
       daemon_reload: yes
+
+  - name: Configure logrotation.
+    template:
+      src: tinc.logrotate.j2
+      dest: /etc/logrotate.d/tinc
+      owner: root
+      group: root
+      mode: u=rw,g=r,o=r
 
   when: ansible_service_mgr == "systemd"
 

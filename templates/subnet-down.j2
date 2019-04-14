@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+LOG_FILE="{{ tinc_log_path }}/{{ tinc_netname }}-subnet.log"
+
+echo "subnet-down : #############################################################" >> $LOG_FILE
+echo "subnet-down : NETNAME '$NETNAME'" | ts >> $LOG_FILE
+echo "subnet-down : NAME '$NAME'" | ts >> $LOG_FILE
+echo "subnet-down : DEVICE '$DEVICE'" | ts >> $LOG_FILE
+echo "subnet-down : INTERFACE '$INTERFACE'" | ts >> $LOG_FILE
+echo "subnet-down : NODE '$NODE'" | ts >> $LOG_FILE
+echo "subnet-down : REMOTEADDRESS '$REMOTEADDRESS'" | ts >> $LOG_FILE
+echo "subnet-down : SUBNET '$SUBNET'" | ts >> $LOG_FILE
+echo "subnet-down : GW '$GW'" | ts >> $LOG_FILE
+echo "subnet-down : OURNAME '$OURNAME'" | ts >> $LOG_FILE
+echo "subnet-down : VPNNET '$VPNNET'" | ts >> $LOG_FILE
+
+/usr/bin/env ip route del "$SUBNET" dev "$INTERFACE"
+
+if [ -x "/etc/tinc/${NETNAME}/subnet-down.local" ]; then
+    "/etc/tinc/${NETNAME}/subnet-down.local" "$SUBNET" "$INTERFACE"
+fi

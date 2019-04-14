@@ -1,6 +1,11 @@
 ---
 # defaults file for tinc
 
+tinc_user: root
+tinc_group: root
+tinc_log_path: /var/log/tinc
+tinc_pid_path: "{{ _tinc_net_path }}/{{ tinc_netname }}.pid"
+
 service_name: "{{ tinc_service_name }}"
 tinc_service_name: tinc
 # OpenWRT package manager does not support state: latest
@@ -20,12 +25,13 @@ tinc_vpn_cidr: "/24"
 tinc_loglevel: 0
 
 # logfile to use, # see https://www.tinc-vpn.org/documentation/tincd.8 for details
-tinc_logfile: "--logfile"
+tinc_logfile: "--logfile {{ tinc_log_path }}/{{ tinc_netname }}.log"
 
 # extra options passed to daemon
 tinc_extra_options:
   - "{{ tinc_logfile }}"
   - "--debug={{ tinc_loglevel }}"
+  - "--pidfile={{ tinc_pid_path }}"
 
 # start commandline to execstart
 tinc_systemd_execstart: "/usr/sbin/tincd -n {{ tinc_netname }} {{ tinc_extra_options | join(' ') }}"

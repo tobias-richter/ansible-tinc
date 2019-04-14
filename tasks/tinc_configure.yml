@@ -10,40 +10,23 @@
     _tinc_custom_host_config_state: absent
   when: tinc_host_conf_custom is not defined
 
-- name: ensure tinc netname directory exists
+- name: ensure tinc netname directories exists
   file:
-    path: "{{ _tinc_net_path }}/hosts"
+    path: "{{ item }}"
     recurse: True
     state: directory
+    owner: "{{ tinc_user }}"
+    group: "{{ tinc_group }}"
+  with_items:
+    - "{{ _tinc_net_path }}"
+    - "{{ _tinc_net_path }}/hosts"
 
 - name: create /etc/tinc/nets.boot file from template
   copy:
     content: "{{ tinc_netname }}"
     dest: /etc/tinc/nets.boot
-  notify:
-    - Restart Service
-
-- name: ensure tinc.conf contains connection to core nodes
-  template:
-    src: tinc.conf.j2
-    dest: "{{ _tinc_net_path }}/tinc.conf"
-  notify:
-    - Restart Service
-  tags: connection
-
-- name: create tinc-up file
-  template:
-    src: tinc-up.j2
-    dest: "{{ _tinc_net_path }}/tinc-up"
-    mode: 0755
-  notify:
-    - Restart Service
-
-- name: create tinc-down file
-  template:
-    src: tinc-down.j2
-    dest: "{{ _tinc_net_path }}/tinc-down"
-    mode: 0755
+    owner: "{{ tinc_user }}"
+    group: "{{ tinc_group }}"
   notify:
     - Restart Service
 
@@ -77,15 +60,22 @@
   notify:
     - Restart Service
 
-- name: Deploy files
-  copy:
+- name: Deploy conf, up and down files.
+  template:
     src: "{{ item }}"
-    dest: "{{ _tinc_net_path }}/{{ item }}"
-    mode: o+x
+    dest: "{{ _tinc_net_path }}/{{ item | basename | splitext | first }}"
+    owner: "{{ tinc_user }}"
+    group: "{{ tinc_group }}"
+    mode: u=rwx,g=rx,o=
   with_items:
-    - subnet.pl
-    - subnet-down
-    - subnet-up
+    - subnet.pl.j2
+    - subnet-down.j2
+    - subnet-up.j2
+    - tinc-up.j2
+    - tinc-down.j2
+    - tinc.conf.j2
+  tags:
+    - connection
   notify:
     - Restart Service
 
@@ -121,7 +111,7 @@
     dest: "{{ _tinc_net_path }}/hosts/"
     use_ssh_args: yes
     rsync_opts:
-      - "--chown=root:root"
+      - "--chown={{ tinc_user }}:{{ tinc_group }}"
   when: ansible_os_family != "OpenWrt"
   tags: sync
   notify:
