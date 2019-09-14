@@ -98,6 +98,12 @@
   notify:
     - Restart Service
 
+- name: Delete absent hosts
+  file:
+    path: "{{ _tinc_net_path }}/hosts/{{ item }}"
+    state: absent
+  with_items: "{{ tinc_hosts_absent }}"
+
 - name: fetch tinc hosts file after key creation
   fetch:
     src: "{{ _tinc_net_path }}/hosts/{{ _tinc_hostname }}"
